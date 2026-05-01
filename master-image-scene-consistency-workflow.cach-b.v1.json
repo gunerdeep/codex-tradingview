@@ -1,0 +1,209 @@
+{
+  "workflow_name": "Master Image Scene Consistency Workflow (Cach B)",
+  "version": "1.0.0",
+  "description": "Generate one master image, then render all scenes using that image as a style/character reference for strong visual consistency.",
+  "inputs": {
+    "project": {
+      "title": "<PROJECT_TITLE>",
+      "language": "vi",
+      "aspect_ratio": "16:9",
+      "seed_global": 223344,
+      "num_inference_steps": 35,
+      "cfg_scale": 6.5
+    },
+    "api": {
+      "openai_api_key": "<OPENAI_API_KEY>",
+      "replicate_api_token": "<REPLICATE_API_TOKEN>",
+      "stability_api_key": "<STABILITY_API_KEY>",
+      "removebg_api_key": "<REMOVEBG_API_KEY>"
+    },
+    "model_endpoints": {
+      "script_model": "gpt-4.1",
+      "image_model": "gpt-image-1",
+      "upscale_model": "stability-ai/stable-diffusion-x4-upscaler",
+      "consistency_model": "black-forest-labs/flux-kontext-pro"
+    },
+    "creative": {
+      "master_subject": "<NHAN_VAT_CHINH + TRANG_PHUC + DAC_DIEM_KHUON_MAT>",
+      "style_lock": "cinematic, realistic, natural skin texture, high dynamic range, soft volumetric light",
+      "negative_prompt": "deformed face, extra fingers, duplicate person, logo, watermark, text artifacts, low quality",
+      "story_brief": "<NOI_DUNG_COT_TRUYEN_NGAN>",
+      "scenes_count": 8
+    }
+  },
+  "pipeline": [
+    {
+      "id": "S01_SCRIPT_BREAKDOWN",
+      "type": "llm.generate_json",
+      "provider": "openai",
+      "model": "{{inputs.model_endpoints.script_model}}",
+      "auth": "{{inputs.api.openai_api_key}}",
+      "temperature": 0.4,
+      "prompt": "Ban la dao dien storyboard. Tu story_brief, hay tao JSON scenes[] gom: scene_id, title, location, time_of_day, camera, action, mood, color_hint, continuity_notes. So scene = scenes_count.",
+      "output_schema": {
+        "scenes": [
+          {
+            "scene_id": "S01",
+            "title": "",
+            "location": "",
+            "time_of_day": "",
+            "camera": "",
+            "action": "",
+            "mood": "",
+            "color_hint": "",
+            "continuity_notes": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": "S02_MASTER_PROMPT_PACK",
+      "type": "llm.generate_json",
+      "provider": "openai",
+      "model": "{{inputs.model_endpoints.script_model}}",
+      "auth": "{{inputs.api.openai_api_key}}",
+      "temperature": 0.2,
+      "prompt": "Tao bo prompt cho 1 master image duy nhat. Output gom: master_prompt, character_sheet_prompt, environment_anchor_prompt, negative_prompt_final. Yeu cau khoa chat dac diem nhan vat, chat lieu trang phuc, lens, lighting, color science.",
+      "output_schema": {
+        "master_prompt": "",
+        "character_sheet_prompt": "",
+        "environment_anchor_prompt": "",
+        "negative_prompt_final": ""
+      }
+    },
+    {
+      "id": "S03_GENERATE_MASTER_IMAGE",
+      "type": "image.generate",
+      "provider": "openai",
+      "model": "{{inputs.model_endpoints.image_model}}",
+      "auth": "{{inputs.api.openai_api_key}}",
+      "params": {
+        "prompt": "{{S02_MASTER_PROMPT_PACK.master_prompt}}",
+        "size": "1536x864",
+        "quality": "high",
+        "background": "auto"
+      },
+      "outputs": {
+        "master_image_url": "",
+        "master_image_sha256": ""
+      }
+    },
+    {
+      "id": "S04_CHARACTER_SHEET",
+      "type": "image.variation",
+      "provider": "openai",
+      "model": "{{inputs.model_endpoints.image_model}}",
+      "auth": "{{inputs.api.openai_api_key}}",
+      "params": {
+        "reference_image_url": "{{S03_GENERATE_MASTER_IMAGE.master_image_url}}",
+        "prompt": "{{S02_MASTER_PROMPT_PACK.character_sheet_prompt}}",
+        "size": "1536x864",
+        "quality": "high"
+      },
+      "outputs": {
+        "character_sheet_url": ""
+      }
+    },
+    {
+      "id": "S05_SCENE_PROMPT_COMPILER",
+      "type": "transform.map",
+      "source": "{{S01_SCRIPT_BREAKDOWN.scenes}}",
+      "map": {
+        "scene_id": "{{item.scene_id}}",
+        "scene_prompt": "Main character must match MASTER exactly (face, hairline, costume details, age, body ratio). {{item.action}} in {{item.location}} at {{item.time_of_day}}, camera: {{item.camera}}, mood: {{item.mood}}, palette: {{item.color_hint}}, style lock: {{inputs.creative.style_lock}}, continuity: {{item.continuity_notes}}.",
+        "scene_negative": "{{inputs.creative.negative_prompt}}, {{S02_MASTER_PROMPT_PACK.negative_prompt_final}}"
+      }
+    },
+    {
+      "id": "S06_RENDER_ALL_SCENES",
+      "type": "loop.for_each",
+      "items": "{{S05_SCENE_PROMPT_COMPILER}}",
+      "do": [
+        {
+          "id": "S06A_CONSISTENT_RENDER",
+          "type": "image.edit_with_reference",
+          "provider": "replicate",
+          "model": "{{inputs.model_endpoints.consistency_model}}",
+          "auth": "{{inputs.api.replicate_api_token}}",
+          "params": {
+            "reference_images": [
+              "{{S03_GENERATE_MASTER_IMAGE.master_image_url}}",
+              "{{S04_CHARACTER_SHEET.character_sheet_url}}"
+            ],
+            "prompt": "{{item.scene_prompt}}",
+            "negative_prompt": "{{item.scene_negative}}",
+            "aspect_ratio": "{{inputs.project.aspect_ratio}}",
+            "seed": "{{inputs.project.seed_global + loop.index}}",
+            "steps": "{{inputs.project.num_inference_steps}}",
+            "guidance": "{{inputs.project.cfg_scale}}"
+          },
+          "outputs": {
+            "scene_image_url": ""
+          }
+        },
+        {
+          "id": "S06B_FACE_CHECK",
+          "type": "vision.similarity_check",
+          "provider": "custom",
+          "params": {
+            "reference": "{{S03_GENERATE_MASTER_IMAGE.master_image_url}}",
+            "candidate": "{{S06A_CONSISTENT_RENDER.scene_image_url}}",
+            "threshold": 0.78
+          },
+          "on_fail": {
+            "retry": 2,
+            "adjust_prompt": "Increase identity lock, keep facial landmarks and costume unchanged."
+          }
+        },
+        {
+          "id": "S06C_UPSCALE",
+          "type": "image.upscale",
+          "provider": "replicate",
+          "model": "{{inputs.model_endpoints.upscale_model}}",
+          "auth": "{{inputs.api.replicate_api_token}}",
+          "params": {
+            "image": "{{S06A_CONSISTENT_RENDER.scene_image_url}}",
+            "scale": 2
+          },
+          "outputs": {
+            "scene_image_upscaled_url": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "S07_EXPORT_MANIFEST",
+      "type": "transform.collect",
+      "from_loop": "S06_RENDER_ALL_SCENES",
+      "output": {
+        "project": "{{inputs.project.title}}",
+        "master_image": "{{S03_GENERATE_MASTER_IMAGE.master_image_url}}",
+        "character_sheet": "{{S04_CHARACTER_SHEET.character_sheet_url}}",
+        "scenes": [
+          {
+            "scene_id": "{{loop.item.scene_id}}",
+            "final_image": "{{loop.S06C_UPSCALE.scene_image_upscaled_url}}"
+          }
+        ]
+      }
+    }
+  ],
+  "qa_rules": {
+    "hard_rules": [
+      "Character identity must remain stable across all scenes.",
+      "No text/logo/watermark in generated images.",
+      "Outfit continuity must follow master image unless scene explicitly changes costume."
+    ],
+    "scorecard": {
+      "identity_consistency": 0.45,
+      "lighting_style_consistency": 0.2,
+      "composition_quality": 0.2,
+      "artifact_free": 0.15
+    },
+    "minimum_pass_score": 0.82
+  },
+  "notes": [
+    "This JSON is engine-agnostic; map each node type to n8n/Make/custom workers.",
+    "If only OpenAI stack is used, replace replicate nodes with image edits/variations from the same model and keep reference chaining."
+  ]
+}
