@@ -1,0 +1,2224 @@
+{
+  "name": "tạo video auto",
+  "nodes": [
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1680,
+        112
+      ],
+      "id": "704b48e4-e484-4fdb-b292-70b769581df2",
+      "name": "Wait1",
+      "webhookId": "89cff64a-5100-4eef-96c3-c8b043c59427"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.geminigen.ai/uapi/v1/history/{{ $json.uuid }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "geminiai-b314c79ddf1c2119550d4572f8494b6c"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1392,
+        112
+      ],
+      "id": "7c3a11fe-ca2b-4345-acb6-7cab51910300",
+      "name": "Get status",
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Bwv6NEDlDKSZo1C6",
+          "name": "geminigemv1.2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "03b36cd1-012c-42b2-83e9-9dcb9180133a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Processing"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "69b0eccd-208d-4e8e-b0e0-594624524f19",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Done"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ce4dba9b-509a-41c8-9360-f798c33ab7f8",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Fail"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1072,
+        96
+      ],
+      "id": "dbe7c883-ddb3-4638-95ae-c0541cc1b23c",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.generated_video[0].video_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -800,
+        112
+      ],
+      "id": "ad256ca8-6960-4a78-8316-44658b1e46d9",
+      "name": "download"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.geminigen.ai/uapi/v1/video-gen/veo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "geminiai-ba04de5a498fcc234a9620c831b1ae95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $('Edit Fields4').item.json.veo3_prompt }}\nSTRICT VISUAL CONSISTENCY LOCK:\nThe provided reference image is mandatory and must be treated as the exact visual anchor.\nPreserve the same character identity, same face, same age, same hairstyle, same outfit, same motorcycle, same vehicle color, same environment, same lighting, and same realistic cinematic commercial style.\nNo redesign, no replacement, no visual drift, no alternate character interpretation, and no environment change.\nThis shot must feel like a direct continuation of the reference image.\n\nSTRICT NO-TEXT RULE:\nDialogue may exist only as spoken audio.\nNever render any subtitles, captions, labels, letters, words, symbols, typography, speech bubbles, signage, UI elements, or readable text on screen.\nNo on-screen writing of any kind is allowed.\nTuyệt đối không được có chữ hay phụ đề trong video. Đây là yêu cầu bắt buộc."
+            },
+            {
+              "name": "model",
+              "value": "veo-3.1-fast"
+            },
+            {
+              "name": "resolution",
+              "value": "720p"
+            },
+            {
+              "name": "aspect_ratio",
+              "value": "9:16"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "ref_images",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1888,
+        112
+      ],
+      "id": "e043993a-8dfb-4caf-b6b5-56e24c428887",
+      "name": "Create video",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -3056,
+        128
+      ],
+      "id": "0a6a8443-31ce-48a5-ab77-ad609e29cec2",
+      "name": "Wait",
+      "webhookId": "8bde8c23-305e-4f64-88d8-dbdfb27e8f1e"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.geminigen.ai/uapi/v1/history/{{ $json.uuid }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2848,
+        128
+      ],
+      "id": "c01c04e2-8036-41f2-9ab2-444c9f137669",
+      "name": "check stautus",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Bwv6NEDlDKSZo1C6",
+          "name": "geminigemv1.2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "04cddf72-aa28-4545-a613-c7322ff69c4d",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2624,
+        128
+      ],
+      "id": "3e3a64fd-8a46-4888-9069-b431b0331eb7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.geminigen.ai/uapi/v1/generate_image",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.image_prompt }}\n\nMASTER VISUAL IDENTITY:\nsame Vietnamese Honda service advisor, same face, same age around 28-35, same neat black hair, same red and white Honda-style polo shirt, same black trousers, same clean authorized Honda showroom/service center in Vietnam, same bright white and red lighting, same polished floor, same realistic cinematic commercial style.\n\nSTRICT CONSISTENCY:\nDo not change the main character identity, outfit, motorcycle model, motorcycle color, showroom style, lighting, or visual atmosphere.\nVertical 9:16, realistic cinematic commercial image, no text, no subtitles, no readable signs, no watermark."
+            },
+            {
+              "name": "model",
+              "value": "nano-banana-pro"
+            },
+            {
+              "name": "aspect_ratio",
+              "value": "9:16"
+            },
+            {
+              "name": "output_format",
+              "value": "jpeg"
+            },
+            {
+              "name": "resolution",
+              "value": "1K"
+            },
+            {
+              "name": "style",
+              "value": "Realistic"
+            },
+            {
+              "name": "file_urls",
+              "value": "https://cvgrlrolpxysctayljwy.supabase.co/storage/v1/object/public/honda/Gemini_Generated_Image_i01uhmi01uhmi01u.png"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -3440,
+        128
+      ],
+      "id": "3ef5e629-762b-4c0c-a5ff-97cd4c184f77",
+      "name": "tạo ảnh",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Bwv6NEDlDKSZo1C6",
+          "name": "geminigemv1.2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "74ed8f14-c0fa-4084-b7cb-75fcfd8a2502"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "đang tạo ảnh"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "abd6a859-a8bb-4d1c-8994-d0a2d3a2e3d6",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": " thành công"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "37da1e3c-352a-4364-8657-36bb0ea13b2f",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": 3,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "thất bại"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2368,
+        96
+      ],
+      "id": "b016f157-9094-47ea-a385-ad81ad8d8bd2",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Đọc kỹ ý tưởng từ script và description dưới đây để tạo video y hệt về ý tưởng nhưng hay hơn\n- Source Script:{{ $json.output }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=🎯 ROLE & PURPOSE\n\nYou are a Lead Short-Form Video Creative Director for an authorized Honda motorcycle sales and service store in Vietnam.\n\nYour job is to transform the provided Source Script and Source Description into a high-converting, Vietnamese short video concept for Facebook Reels, TikTok, YouTube Shorts, or Zalo video.\n\nThe business is an authorized Honda motorcycle sales and service store. It sells new Honda Vietnam motorcycles such as SH160, SH125, SH Mode, Vision, Winner, Wave Alpha, Air Blade, Lead, Future and other Honda Vietnam models. It also provides official maintenance and repair services using genuine Honda parts, including tires, batteries, brake pads, air filters, spark plugs, drive belts, engine oil, and other genuine service items.\n\nThe video must help viewers understand one clear customer need, problem, fear, or buying decision related to Honda motorcycles, official service, genuine parts, maintenance, safety, convenience, savings, or long-term vehicle value.\n\nThe purpose of the video is to attract customers, build trust, educate viewers, and encourage them to contact or visit the store. The content must feel useful, honest, close to real customer concerns, and suitable for Vietnamese audiences.\n\n---\n\n📥 SOURCE INPUT\n\nYou will receive:\n\n- Source Script: the original idea, sales message, service topic, vehicle model, or customer pain point.\n- Source Description: additional context, product/service details, promotion angle, or explanation.\n\nYou MUST follow the Source Script and Source Description closely.\n\nDo NOT invent unrelated vehicle models, services, promotions, prices, discounts, warranty terms, or official policies unless they are clearly provided in the Source Script or Source Description.\n\nIf exact prices, discounts, or promotion details are not provided, use safe general phrasing such as:\n- “liên hệ cửa hàng để được tư vấn giá tốt nhất”\n- “ghé cửa hàng để được kiểm tra và tư vấn”\n- “tùy phiên bản và thời điểm”\n- “nhận tư vấn chi tiết tại cửa hàng”\n\n---\n\n🎬 VIDEO TASK\n\nCreate a 85 second short-form Vietnamese video in a cinematic, realistic, friendly, and professional style.\n\nThe video must be suitable for a Honda motorcycle sales and service store.\n\nThe video can focus on one of these main purposes:\n\n1. Sell a new Honda motorcycle model.\n2. Compare customer needs between models.\n3. Explain why a customer should buy from an authorized Honda store.\n4. Educate customers about genuine Honda service.\n5. Warn customers about risks of fake parts, poor maintenance, or ignoring vehicle symptoms.\n6. Promote maintenance services such as oil change, tire replacement, brake pad replacement, battery replacement, air filter cleaning/replacement, spark plug replacement, drive belt inspection, periodic maintenance.\n7. Build trust in official Honda parts and trained service technicians.\n8. Encourage customers to visit the store, book service, or contact for consultation.\n\n---\n\n📦 VIDEO STRUCTURE\n\nThe video must contain 10 scenes.\n\nEach scene should be around 6–8 seconds.\n\nEach scene must include:\n- A clear visual situation.\n- One main message.\n- One Vietnamese spoken dialogue line.\n- One scene-specific image prompt.\n- One scene-specific Veo/video prompt.\n\nThe video must follow a strong short-form structure:\n\nScene 1: Hook / Problem / Desire\nOpen with a strong customer pain point, buying desire, or warning.\nExamples:\n- “Đang tính mua Vision mà chưa biết chọn bản nào hả?”\n- “Xe ì máy, hao xăng mà cứ tưởng bình thường à?”\n- “Thay phụ tùng không rõ nguồn gốc là tự hại xe mình đấy!”\n- “Muốn lên SH160 nhưng sợ chọn sai phiên bản?”\n\nScene 2: Explain the problem\nExplain why the viewer should care.\nMention the real consequence: tốn tiền, xe nhanh xuống, mất an toàn, chọn xe không hợp nhu cầu, bảo dưỡng sai làm xe yếu hơn.\n\nScene 3: Introduce the correct solution\nPresent the store, the correct Honda model, or the official service solution.\n\nScene 4: Detail the benefit\nExplain benefits clearly:\n- tiết kiệm xăng\n- vận hành êm\n- thiết kế đẹp\n- phù hợp đi làm, đi học, đi phố\n- phụ tùng chính hãng\n- kỹ thuật viên được đào tạo\n- kiểm tra đúng quy trình\n- yên tâm sử dụng lâu dài\n\nScene 5: Demonstrate the product or service\nShow the motorcycle, showroom, service area, technician, genuine part, inspection process, or customer receiving consultation.\n\nScene 6: Trust-building moment\nShow why customers should choose an authorized Honda store:\n- xe mới chính hãng\n- tư vấn đúng nhu cầu\n- bảo dưỡng theo tiêu chuẩn\n- phụ tùng chính hãng\n- quy trình rõ ràng\n- hỗ trợ khách hàng tận tình\n\nScene 7: Strong recommendation\nGive a direct recommendation based on the topic.\nExamples:\n- “Mua xe thì chọn đúng nhu cầu, đừng chỉ nhìn mỗi giá.”\n- “Xe có dấu hiệu lạ thì kiểm tra sớm, đừng để hỏng nặng mới sửa.”\n- “Đến kỳ bảo dưỡng thì làm đúng hạn để xe bền và an toàn hơn.”\n\nScene 8–10: CTA / Reminder\nEnd with a clear call to action:\n- “Ghé cửa hàng Honda ủy nhiệm để được tư vấn mẫu xe phù hợp.”\n- “Mang xe đến kiểm tra nếu thấy máy yếu, phanh kém, lốp mòn hoặc hao xăng.”\n- “Nhắn tin ngay để được tư vấn xe, giá và dịch vụ bảo dưỡng chính hãng.”\n- “Theo dõi để biết thêm mẹo dùng xe Honda bền, tiết kiệm và an toàn.”\n\n---\n\n🧠 CONTENT ANGLE RULES\n\nThe video must be practical and customer-focused.\n\nAlways answer at least one of these customer questions:\n\n- Mẫu xe này phù hợp với ai?\n- Vì sao nên mua xe tại cửa hàng Honda ủy nhiệm?\n- Khi nào cần thay phụ tùng này?\n- Không bảo dưỡng đúng hạn thì hại gì?\n- Phụ tùng chính hãng khác gì hàng trôi nổi?\n- Xe có dấu hiệu này thì nên làm gì?\n- Làm sao để dùng xe bền, tiết kiệm xăng, ít hỏng vặt?\n- Vì sao nên bảo dưỡng tại điểm dịch vụ chính hãng?\n\nAvoid vague advertising.\n\nDo NOT write generic lines like:\n- “Xe rất đẹp, rất tốt, rất đáng mua.”\n- “Dịch vụ uy tín số một.”\n- “Giá rẻ nhất thị trường.”\n- “Cam kết tốt nhất Việt Nam.”\n\nInstead, write specific useful lines:\n- “Vision hợp với người đi phố mỗi ngày vì xe gọn, dễ xoay trở, tiết kiệm xăng.”\n- “Má phanh mòn làm quãng đường phanh dài hơn, nhất là lúc trời mưa.”\n- “Lọc gió bẩn khiến máy bí, hao xăng và tăng muội trong buồng đốt.”\n- “Dầu nhớt quá hạn làm ma sát tăng, máy nóng và nhanh mòn chi tiết.”\n\n---\n\n🏍️ MOTORCYCLE SALES CONTENT RULES\n\nWhen the topic is about selling a Honda motorcycle, focus on matching the model to the customer’s lifestyle.\n\nYou may mention Honda Vietnam motorcycle models such as:\n- SH160\n- SH125\n- SH Mode\n- Vision\n- Winner\n- Wave Alpha\n- Air Blade\n- Lead\n- Future\n- Blade\n- Vario, only if Source Script or Source Description provides it clearly\n- Other Honda Vietnam models only when provided by the source\n\nModel positioning examples:\n\nSH160 / SH125:\nPremium, elegant, powerful, suitable for customers who want style, comfort, and a higher-end scooter experience.\n\nSH Mode:\nElegant, fashionable, suitable for daily commuting, office workers, and customers who like a refined scooter.\n\nVision:\nCompact, easy to ride, fuel-efficient, suitable for students, office workers, families, and daily city commuting.\n\nWinner:\nSporty, strong personality, manual clutch style, suitable for customers who like performance and dynamic design.\n\nWave Alpha:\nDurable, economical, easy to maintain, suitable for students, workers, families, and everyday practical use.\n\nLead:\nPractical scooter with spacious storage, suitable for office workers, families, and people who carry many personal items.\n\nAir Blade:\nSporty scooter, modern design, suitable for customers who want a stronger, more masculine city scooter.\n\nFuture:\nPractical, durable, fuel-efficient, suitable for customers who want a reliable semi-automatic bike.\n\nDo NOT make unsupported claims about exact horsepower, fuel consumption, prices, installment policies, warranty duration, or promotion details unless provided in the source.\n\n---\n\n🔧 SERVICE & MAINTENANCE CONTENT RULES\n\nWhen the topic is about service, maintenance, or parts, explain the customer problem clearly.\n\nPossible service topics:\n- Periodic maintenance\n- Genuine Honda engine oil\n- Tires\n- Battery\n- Brake pads\n- Air filter\n- Spark plug\n- Drive belt\n- Brake system\n- Cooling system\n- Engine inspection\n- Fuel consumption issue\n- Weak acceleration\n- Hard starting\n- Strange noise\n- Tire wear\n- Brake noise\n- Dashboard warning light\n- General inspection before long trips\n\nFor each service topic, explain:\n\n1. The symptom\nExample:\n“Xe đề khó nổ, đèn yếu, còi nhỏ, có thể ắc quy đang yếu.”\n\n2. The risk\nExample:\n“Cố chạy tiếp có thể làm xe chết máy giữa đường, rất phiền và mất an toàn.”\n\n3. The correct action\nExample:\n“Ghé điểm dịch vụ chính hãng để kiểm tra ắc quy và hệ thống sạc.”\n\n4. The store advantage\nExample:\n“Kỹ thuật viên kiểm tra đúng quy trình, dùng phụ tùng chính hãng Honda nếu cần thay.”\n\nDo NOT give unsafe DIY repair instructions.\n\nDo NOT instruct customers to open engine parts, modify the vehicle, bypass safety systems, or use non-standard parts.\n\nYou may give simple safe advice:\n- kiểm tra lốp mòn\n- thay dầu đúng định kỳ\n- không để xe ngập nước lâu\n- nghe tiếng phanh bất thường thì đi kiểm tra\n- thấy xe hao xăng bất thường thì mang xe đến cửa hàng\n- bảo dưỡng trước chuyến đi xa\n\n---\n\n👥 CHARACTER & SPEAKER RULES\n\nThe video should feel like a real customer situation.\n\nAllowed speaking characters:\n- Sales consultant\n- Service advisor\n- Technician\n- Customer\n- Narrator voice\n- Motorcycle as a friendly animated character, only if it fits the source\n- Genuine Honda part as an animated character, only if the video is playful\n\nFor professional dealership videos, prefer:\n- Sales consultant for sales topics\n- Service advisor or technician for maintenance topics\n- Customer for pain-point opening\n- Narrator for educational explanation\n\nOnly ONE character may speak in each scene.\n\nIf multiple people appear in a scene, only one person speaks. Others react silently.\n\nNo confusing multi-speaker dialogue in the same scene.\n\nEvery `veo3_prompt` must clearly state who is speaking.\n\nHumans should appear natural, full-body or medium-full body, not floating heads.\n\n---\n\n🎙️ DIALOGUE STYLE\n\nAll spoken dialogue must be in Vietnamese.\n\nDialogue must sound natural, direct, trustworthy, and persuasive.\n\nTone:\n- Friendly\n- Professional\n- Clear\n- Urgent when warning about safety or maintenance\n- Confident but not exaggerated\n- Suitable for a real Honda sales and service store\n\nUse Vietnamese everyday wording.\n\nAvoid robotic advertising language.\n\nEach scene dialogue:\n- Maximum 2 sentences.\n- Maximum 28 spoken words.\n- Must be speakable within 6–8 seconds.\n- Must not be too long.\n- Must not contain hashtags.\n- Must not contain emojis.\n- Must not contain on-screen text instructions.\n\nGood dialogue examples:\n\n“Xe hao xăng bất thường đừng chủ quan. Lọc gió bẩn có thể làm máy bí và tốn xăng hơn đấy.”\n\n“Vision hợp với người đi phố mỗi ngày. Xe gọn, dễ lái, tiết kiệm và rất dễ dùng.”\n\n“Má phanh mòn là chuyện không nên để lâu. Phanh kém một nhịp thôi là nguy hiểm rồi.”\n\n“Muốn mua SH160 thì đừng chỉ nhìn màu. Hãy chọn đúng phiên bản, nhu cầu và ngân sách.”\n\n“Dầu nhớt quá hạn làm máy nóng và mòn nhanh hơn. Đến kỳ thì thay ngay cho yên tâm.”\n\n---\n\n📌 VISUAL STYLE\n\nUse realistic, cinematic, bright, clean, professional visuals.\n\nThe store should look like a modern authorized Honda motorcycle showroom and service center.\n\nVisual style:\n- Clean Honda-style showroom atmosphere\n- Bright lighting\n- Red, white, silver, black tones when suitable\n- Polished motorcycles\n- Friendly staff\n- Professional service area\n- Genuine parts displayed neatly\n- Customers receiving consultation\n- Technicians working carefully\n- Close-up of motorcycle details\n- Vertical 9:16 mobile video composition\n\nEvery image_prompt must include:\n- “vertical 9:16”\n- realistic cinematic commercial style\n- bright clean lighting\n- professional Honda authorized store atmosphere, when relevant\n- no text, no subtitles, no signage with readable letters\n\nNo dark, gloomy, dirty, or scary visuals unless the topic is warning about fake parts or neglected maintenance. Even then, keep the video professional and brand-safe.\n\n---\n🔒 VISUAL CONTINUITY LOCK - MANDATORY\n\nBefore creating scenes, define ONE consistent visual world for the whole video.\n\nAll scenes must keep the same:\n- main location\n- main character identity\n- character age\n- character outfit\n- hairstyle\n- motorcycle model\n- motorcycle color\n- showroom or service area style\n- lighting style\n- realistic cinematic commercial look\n\nDo not randomly change the main person, vehicle, color, store, service area, or visual atmosphere between scenes.\n\nEvery image_prompt and every veo3_prompt must repeat the same visual identity words exactly.\n\nUse this format inside every image_prompt and veo3_prompt:\n\nCONTINUITY LOCK: same Vietnamese Honda service advisor, same red and white Honda-style polo shirt, same black trousers, same clean authorized Honda showroom/service center in Vietnam, same bright white and red lighting, same polished floor, same realistic cinematic commercial style.\n\nIf the video is about a customer, keep the same customer throughout all scenes.\nIf the video is about one motorcycle, keep the same motorcycle model and color throughout all scenes.\nIf the first scene is in the service area, keep the visual world connected to the same service center in later scenes.\n\n---\nPROMPT CONSTRUCTION RULES - MANDATORY\n\nEvery image_prompt must start with:\nCONTINUITY LOCK: same main character, same outfit, same motorcycle, same Honda authorized store environment.\n\nEvery veo3_prompt must start with:\nScene [number], CONTINUITY LOCK: same main character, same outfit, same motorcycle, same Honda authorized store environment.\n\nExample image_prompt opening:\nCONTINUITY LOCK: same Vietnamese Honda service advisor, same red and white Honda-style polo shirt, same black trousers, same Honda motorcycle, same clean authorized Honda showroom or service center in Vietnam, same bright white and red lighting, same realistic cinematic commercial style.\n\nExample veo3_prompt opening:\nScene 1, CONTINUITY LOCK: same Vietnamese Honda service advisor, same red and white Honda-style polo shirt, same black trousers, same Honda motorcycle, same clean authorized Honda showroom or service center in Vietnam, same bright white and red lighting, same realistic cinematic commercial style.\n\nDo not let each scene create a new person, new motorcycle, new outfit, new showroom, new service area, or new visual style.\n---\n\n🚫 STRICTLY FORBIDDEN\n\nDo NOT include:\n- On-screen text\n- Subtitles inside image/video prompt\n- Floating captions\n- Readable signs\n- Watermarks\n- Fake price claims\n- Fake promotion claims\n- “Rẻ nhất thị trường”\n- “Cam kết rẻ nhất”\n- “Tốt nhất Việt Nam”\n- Unsupported warranty claims\n- Claims that Honda Vietnam did not provide\n- Competitor attacks\n- Unsafe repair instructions\n- Vehicle modification advice\n- Street racing\n- Dangerous riding\n- Underage riding\n- No helmets while riding\n- Stunts\n- Illegal road behavior\n- Sensitive or sexual content\n- Political content\n- Celebrity names\n- Real person references\n- Any copyrighted character or franchise names\n\nIf a riding scene appears, the rider must wear a helmet and ride safely.\n\nIf a customer tests or receives a motorcycle, the scene must be safe and professional.\n\n---\n\n✅ TRUST & COMPLIANCE RULES\n\nThe content must be honest and suitable for a real authorized Honda dealership/service business.\n\nIf you mention “chính hãng,” make sure it refers to:\n- xe Honda Việt Nam chính hãng\n- phụ tùng Honda chính hãng\n- dầu nhớt chính hãng Honda\n- dịch vụ bảo dưỡng theo quy trình chính hãng\n- kỹ thuật viên tại cửa hàng Honda ủy nhiệm\n\nDo NOT claim to be Honda Vietnam itself.\n\nUse wording such as:\n- “cửa hàng Honda ủy nhiệm”\n- “điểm dịch vụ Honda ủy nhiệm”\n- “phụ tùng chính hãng Honda”\n- “xe Honda Việt Nam”\n- “kỹ thuật viên kiểm tra theo quy trình”\n\n---\n\n📸 IMAGE PROMPT REQUIREMENTS\n\nFor each scene, create an `image_prompt` for generating a realistic commercial-style vertical image.\n\nEach image_prompt must:\n- Match the exact scene content.\n- Mention the main character or subject.\n- Mention the location: showroom, service area, reception desk, road-safe context, or customer home if needed.\n- Mention visual composition.\n- Mention “vertical 9:16”.\n- Mention “no text, no subtitles, no readable signs, no watermark”.\n- Be connected to the previous and next scene.\n- Use bright, warm, clean colors.\n\nExample image_prompt style:\n\n“A realistic cinematic commercial image inside a clean authorized Honda motorcycle showroom in Vietnam, a friendly sales consultant standing beside a shiny Honda Vision scooter while advising a young customer, bright white and red showroom lighting, polished floor, professional atmosphere, vertical 9:16, no text, no subtitles, no readable signs, no watermark.”\n\n---\n\n🎥 VEO3 PROMPT REQUIREMENTS\n\nFor each scene, create a detailed `veo3_prompt` for AI video generation.\n\nEach veo3_prompt must include:\n- Scene number.\n- Main setting.\n- Main character.\n- Action.\n- Camera movement.\n- Mood.\n- Spoken Vietnamese dialogue.\n- Clear instruction that only one character speaks.\n- Instruction that no text or subtitles appear on screen.\n- Vertical 9:16 composition.\n\nThe dialogue inside `veo3_prompt` must be Vietnamese only.\n\nDo NOT include hashtags in `veo3_prompt`.\n\nExample veo3_prompt style:\n\n“Scene 1, vertical 9:16 realistic cinematic commercial video inside a clean authorized Honda motorcycle showroom. A friendly Vietnamese sales consultant stands beside a shiny Honda Vision scooter while a young customer looks interested. Slow camera push-in from the front of the scooter to the consultant. Bright clean lighting, professional dealership atmosphere. Only the sales consultant speaks, the customer reacts silently. Dialogue in Vietnamese: ‘Đang tìm xe đi phố mỗi ngày hả? Vision gọn, dễ lái và rất hợp cho nhu cầu tiết kiệm.’ No subtitles, no captions, no readable text, no watermark.”\n\n---\n\n🧾 CAPTION REQUIREMENTS\n\nCreate one `caption` for the whole video.\n\nCaption must:\n- Be Vietnamese.\n- Be detailed but concise.\n- Explain the main benefit or warning.\n- Encourage viewers to contact or visit the store.\n- Not contain hashtags.\n- Not contain fake prices or fake promotions.\n- Not overpromise.\n- Match the Source Script and Source Description.\n\nGood caption examples:\n\n“Xe có dấu hiệu hao xăng, ì máy hoặc khó nổ thì đừng để lâu. Mang xe đến cửa hàng Honda ủy nhiệm để được kiểm tra, tư vấn và bảo dưỡng bằng phụ tùng chính hãng Honda.”\n\n“Đang phân vân chọn SH160, SH125, Vision hay Wave Alpha? Ghé cửa hàng để được tư vấn mẫu xe phù hợp với nhu cầu đi lại, ngân sách và phong cách của bạn.”\n\n“Bảo dưỡng đúng hạn giúp xe vận hành êm hơn, an toàn hơn và bền hơn. Cửa hàng hỗ trợ kiểm tra, thay dầu nhớt, lốp, ắc quy, má phanh, lọc gió, bugi, dây đai và phụ tùng chính hãng Honda.”\n\n---\n\n# HASHTAG REQUIREMENTS\n\nCreate one `hashtags` string.\n\nHashtags must include these required hashtags:\n\n#Honda #HondaVietnam #XeMayHonda #HondaUyNhiem #PhuTungChinhHang #BaoDuongXeMay #DichVuHonda\n\nYou may add relevant hashtags depending on the topic, such as:\n#SH160 #SH125 #SHMode #Vision #Winner #WaveAlpha #AirBlade #Lead #Future #ThayDauHonda #AcQuyXeMay #LopXeMay #MaPhanh #LocGio #Bugi #DayDai #MuaXeMay\n\nDo NOT add unrelated hashtags.\n\nDo NOT put hashtags inside `caption`, `image_prompt`, or `veo3_prompt`.\n\n---\n\n📤 OUTPUT FORMAT\n\nReturn ONLY valid JSON.\n\nDo NOT add explanations.\n\nDo NOT add markdown.\n\nDo NOT wrap JSON in code fences.\n\nThe JSON must match this exact structure:\n\n{\n  \"scenes\": [\n    {\n      \"scene_number\": 1,\n      \"character_name\": \"Tên nhân vật tiếng Việt (English name)\",\n      \"veo3_prompt\": \"String\",\n      \"image_prompt\": \"String\"\n    }\n  ],\n  \"video_metadata\": {\n    \"caption\": \"String\",\n    \"hashtags\": \"String\"\n  }\n}\n\n---\n\n🔒 FINAL QUALITY CHECK BEFORE OUTPUT\n\nBefore returning the final JSON, check:\n\n1. The video has 7–10 scenes.\n2. Every scene has `scene_number`, `character_name`, `veo3_prompt`, and `image_prompt`.\n3. Every scene has one Vietnamese spoken dialogue inside `veo3_prompt`.\n4. Dialogue is short enough for 6–8 seconds.\n5. The video clearly matches the Source Script and Source Description.\n6. No fake prices, fake promotions, or unsupported claims.\n7. No hashtags appear inside `caption`, `image_prompt`, or `veo3_prompt`.\n8. Caption has no hashtags.\n9. Hashtags are only in `video_metadata.hashtags`.\n10. Every image_prompt includes “vertical 9:16”.\n11. No subtitles, captions, readable signs, watermarks, or on-screen text are requested in image/video prompts.\n12. If riding appears, the rider wears a helmet and rides safely.\n13. The final output is valid JSON only."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -1968,
+        -432
+      ],
+      "id": "5a3f4c50-8c67-45b0-8f18-681ea5162a7c",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"scenes\": [\n    {\n      \"scene_number\": 1,\n      \"character_name\": \"String\",\n      \"veo3_prompt\": \"String\",\n      \"image_prompt\": \"String\"\n    }\n  ],\n  \"video_metadata\": {\n    \"caption\": \"String\",\n    \"hashtags\": \"String\"\n  }\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1856,
+        -208
+      ],
+      "id": "7eb6111a-ec61-4269-859b-033e6f3c8f81",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -3520,
+        -416
+      ],
+      "id": "3637718c-6a6a-4f49-b90b-e41a4ddca59b",
+      "name": "When chat message received",
+      "webhookId": "6b087dc3-9fac-4ad4-96f6-f4dfe016e9da"
+    },
+    {
+      "parameters": {
+        "promptType": "=define",
+        "text": "=Transcript: {{ $json.transcript }}\n\nTừ Transcript trên, hãy viết thành nội dung video viral trên TikTok tuân thủ chặt chẽ các yêu cầu sau:\n\n# Yêu cầu quan trọng bắt buộc phải tuân thủ\n1. Tuyệt đối không sử dụng ký tự (*) hay (**) trong nội dung. Và tuyệt đối không được xuống dòng\n2. Bỏ toàn bộ những đoạn chú thích như \"Nội dung video Tiktok về Marketing\", \"Nhạc nền sôi động\", \"Hình ảnh: nhân viên buồn bã\" hay \"Mở đầu - 3 giây\" đi. Chỉ tạo ra văn bản là nội dung của của video luôn để chỉ việc nói theo hoặc chuyển thành giọng nói ghép vào video\n3. Viết liền mạch thành 1 đoạn văn duy nhất, không xuống dòng\n4. Bắt buộc bỏ ký tự đóng mở ngoặc (\"\") trong nội dung đi để tránh json lỗi. Bắt buộc bỏ ký tự đóng mở ngoặc. Bỏ toàn bộ ký tự đóng mở ngoặc (\"). Bỏ ký tự \"\" đi (Ví dụ: \"tích\" => tích) \n5. Vào câu chuyện hoặc nội dung luôn. Không được mở đầu dài dòng. Sao cho khiến người nghe cảm thấy hấp dẫn tò mò ngay từ câu đầu. Bắt buộc bỏ các câu mở đầu thừa thãi như: \"Bạn biết không\" hay \"bạn có biết\" ở đầu nội dung đi. Thay vào đó cho câu mở đầu hấp dẫn trực diện và ấn tượng hơn theo một trong các ví dụ sau. Ví dụ: \"Trò lừa gạt lớn nhất đó là ngành công nghiệp dạy lái xe\" hoặc \"Tại sao người giàu ngày càng giàu, còn người nghèo thì mãi nghèo\" hoặc \"Đỉnh cao trong kinh doanh là tự mình tạo ra thị trường\" hoặc \"Nếu như bạn biết được 10 chiến lược kinh doanh này, bạn sẽ không bao giờ còn gặp khó khăn nữa\"\n6. Nội dung nên ở dạng kể chuyện vô cùng ý nghĩa, thực tế, sâu cay, ẩn chứa nhiều đạo lý sâu sắc. Nhưng phải vô cùng thực chiến\n7. Hãy viết dấu câu chuẩn để sao cho chuyển thể sang giọng nói (TTS) có ngắt nghỉ và biểu cảm rõ ràng. Nội dung tạo ra nên có độ dài tương thích với video 2,5-3 phút khi chuyển thể sang giọng nói text to speech. Đầy đủ các dấu chấm than, hỏi chấm, hai chấm, chấm phẩy (!,?,:,;)\n8. Nếu nội dung Transcript có bán sách và giới thiệu sách hay sản phẩm gì. Hãy lược bỏ các đoạn giới thiệu sản phẩm hay bán hàng trong nội dung bạn tạo ra\n9. Hãy học toàn bộ văn phong, ngôn ngữ và cách dẫn dắt của những nội dung mẫu sau đây. Từ đó tạo ra nội dung với văn phong, ngôn ngữ tương tự:\n\n* Nội dung mẫu 1:\n\"Những người không có gì trong tay mà vẫn có thể từ tầng lớp thấp leo lên thành ông chủ nhỏ đều hiểu rõ 30 phương thức huy động vốn. Nhưng đại đa số mọi người chỉ biết đến 4 phương thức này. Phương thức đầu tiên là tư duy vay mượn. Lấy tài sản có sẵn như xe cộ, nhà cửa, thế chấp cho ngân hàng và mượn từ người quen gom đủ 1 tỷ để khởi nghiệp. Hiện nay, 90% mọi người đều làm theo cách này, nhưng đây là thuộc dạng huy động vốn nợ, nghĩa là nếu thất bại, tất cả tài sản sẽ bị chủ nợ hoặc ngân hàng thu lại, có nguy cơ mất hết và mất luôn các mối quan hệ thân thiết. Phương thức thứ hai là tư duy vốn cổ phần. Viết một bản kế hoạch kinh doanh, làm thành một dự án thuyết trình, tìm kiếm nhà đầu tư, mô tả quy trình kiếm một tỷ từ 200 triệu, một cách đầy tự tin và thuyết phục. Sau đó, bán 20% cổ phần để huy động 200 triệu. Nếu thành công, bạn kiếm được một tỷ, trả cho nhà đầu tư 200 triệu, phần còn lại 800 triệu là của bạn. Dù dự án thất bại, tiền của nhà đầu tư mất đi thì bạn cũng không phải chịu trách nhiệm, còn có thể nhận lương trong vài năm, không có món nợ nào và tiếp tục một dự án khác ngay lập tức. Phương thức thứ 3 là tư duy vé số, cắt nhỏ dự án thành 100 triệu phần, mỗi phần trị giá 10.000, tạo ra một quỹ vốn 100 tỷ và bán công khai. Người mua nghĩ rằng đây là cơ hội rủi ro thấp, lợi nhuận cao, còn bạn thì nhanh chóng thu về 50 tỷ. Sau đó dùng một phần để phát thưởng theo dạng số số, với cơ cấu giải thưởng có thể tùy chỉnh. Phương thức thứ 4 là tư duy huy động quyền lợi thu nhập. Bán quyền thu nhập trong tương lai của dự án cho nhà đầu tư, dùng thời gian một năm để thu trước số tiền của vài chục năm. Hiện tại, nhiều người vẫn thiếu tiền chủ yếu vì thiếu kế hoạch huy động vốn cụ thể. Điều này do họ chưa biết rằng có tới 30 phương thức huy động vốn trong kinh doanh. Ngoài vay ngân hàng, ta còn có thể tìm đến nhà đầu tư, nhà cung cấp, khách hàng để huy động vốn. Nếu bạn đang gặp khó khăn tài chính, thất nghiệp hay đang trong giai đoạn khó khăn của cuộc sống, tôi khuyên bạn dù thức khuya cũng nên \btìm hiểu những phương thức này, Biến mọi thứ thành tiền. Đây là những bí quyết để kiếm tiền và cách tư duy. Khi đã làm chủ nó, bạn sẽ cảm thấy mình như được khai sáng. Bạn sẽ toát mồ hôi và nhận ra rằng trước đây bạn chỉ làm việc bằng sự chăm chỉ, nhiệt huyết và những suy nghĩ đơn giản của mình. Tại sao có rất nhiều người không đi làm nhưng vẫn sống rất tốt và bạn tự hỏi tiền của họ đến từ đâu? Trong khi nhiều người đi làm quần quật từ sáng đến đêm nhưng vẫn không có tiền. Cách nhanh nhất để làm sụp đổ một người là để họ chăm chỉ trong vô vọng. Nếu bạn vẫn còn một chút khát khao kiếm tiền thì nhất định phải nhận ra những chân lý này.\"\n\n* Nội dung mẫu 2:\n\"Tiền của người nào dễ kiếm nhất? Tiền của đàn ông háo sắc, tiền của phụ nữ thích sắc đẹp, tiền cho sức khỏe của người già, tiền giáo dục của trẻ em, tiền của người lười biếng muốn tiết kiệm công sức, tiền của người cô đơn dành cho thú cưng. Muốn kiếm tiền, nhớ một câu thần chú, phụ nữ sợ xấu, trẻ em sợ ngốc, người già sợ bệnh, đàn ông sợ thất bại. Cổ nhân có câu, bắt lấy điểm yếu của con người, đó là cơ hội kinh doanh lớn nhất. Con trai của đại gia hỏi cha rằng Ba ơi, khách hàng giới thiệu cho con một dự án Con kiếm được 50 triệu Con nghĩ nên chia cho họ 3 triệu hay 5 triệu Cha nói 4, 6 Con 4, họ 6 Con trai ngạc nhiên hỏi Nếu vậy thì nhà mình sẽ kiếm được ít quá sao? Cha nói, ngày xưa trong làng có một người ngốc, không biết nhận tiền. Người khác đưa cho một tờ một đồng và một tờ năm đồng, hỏi anh ta chọn tờ nào. Anh ta chỉ chọn tờ một đồng. Mỗi lần có người treo, người ngốc luôn chọn tờ một đồng. Người ta cười anh ta ngốc, ngày càng nhiều người treo anh ta. Chỉ có người ngốc mới hiểu, nếu chọn tờ lớn hơn thì sau này ai còn mang tiền đến treo nữa. Nghe xong, con trai liền tỉnh ngộ. Trên đời này, thứ lợi hại nhất không phải tiền bạc, cũng không phải quyền lực mà là cách tư duy. Nếu bạn luôn cảm thấy mình ngây thơ, không có mưu mẹo, gặp chuyện không biết xử lý ra sao, dù khó khăn đến đâu cũng phải tìm kiếm cho mình một ngừoi thầy, người có thể dạy cho bạn tất cả những tư duy lợi hại và những chiến lược để vượt lên trong xã hội. Bạn sẽ toát mồ hôi lạnh, nhận ra trước đây mình đang làm việc mà không có sự chỉ dẫn, chỉ dựa vào nhiệt tình và cần cù. Nhiều lúc không phải bạn kém cõi mà chỉ vì bạn chưa học hỏi được trí tuệ của người đi trước, Hãy tìm kiếm cao nhân hướng dẫn bạn cách nói chuyện và cư xử, từ tốn đối nhân xử thế, dạy chiến lược và phương pháp phân tích chi tiết, cách làm người xử sự, giao tiếp, đàm phán, phòng ngừa và hóa giải. Nhiều người cả đời vất vả, có lẽ cũng không bằng một câu trong lĩnh hội được từ minh sư. Học được tất cả những tư duy đó, bạn sẽ dễ dàng hơn trong công việc và cuộc sống.\"\n\n* Nội dung mẫu 3:\n\"Đỉnh cao trong kinh doanh, tự mình tạo ra thị trường. Một câu chuyện bán bể cá. Có một thương nhân nọ chuyên buôn bán các loại bể nuôi cá cảnh và quyết định sẽ mở rộng phạm vi kinh doanh sang vùng bên. Ông đến khu chợ bán cá cảnh, gặp người bán cá vàng, đặt mua 500 con với giá rẻ. Người bán cá rất vui vì đã nhiều năm buôn bán cá vàng nhưng chưa bao giờ bán được nhiều đến vậy. Ông thương nhân bảo người bán đó gánh thùng cá 500 con này đến vùng thượng nguồn của chiếc kênh đào đi qua thị trấn và nói, ông thả toàn bộ 500 con cá vàng xuống dòng kênh này Tôi sẽ trả bù tiền không thiếu một xu Ngày hôm sau, tin đồn lan truyền khắp thị trấn Thật kỳ lạ, ở trong kênh đảo có biết bao nhiêu là con cá vàng rất đẹp Người dân trong thị trấn ủa đến xem Nhiều người còn nhảy xuống kênh tìm bắt cá vàng Những người bắt được cá vàng liền hồ hởi đi mua bể cá Những người chưa bắt được cá cũng kéo nhau đi mua bể cá Mọi người đều có chung suy nghĩ Trong kênh đảo có cá vàng Tuy hôm nay mình chưa bắt được nhưng cũng sẽ có một ngày mình cũng bắt được Bể cá sớm hay muộn cũng có lúc dùng đến Thương nhân liên tục tăng giá Nhưng mấy nghìn chiếc bể cá của ông ta cũng được bán hết Bài học Trong kinh doanh, đôi khi không phải cứ sản phẩm hay dịch vụ của bạn tốt thì đương nhiên sẽ có người mua hay sử dụng chúng mà còn phải dựa vào nhu cầu người mua. Người kinh doanh khôn ngoan là người biết tạo ra nhu cầu ở những nơi chưa có nhu cầu. 2. Chuyện mua bát đĩa Một cặp vợ chồng nọ đi dạo qua các cửa hàng. Người vợ nhìn thấy một bộ đồ ăn cao cấp và tỏ ý muốn mua. Ông chồng chê món đồ đó đắt đỏ nên không muốn chi tiền. Người bán hàng xem qua rồi nói nhỏ một câu với người chồng. Sau khi nghe xong, ông không còn do dự. Liên lập tức bỏ tiền ra mua Tại sao người chồng lại thay đổi nhanh chóng đến như vậy Bởi vì người bán hàng đã nói Bộ đồ ăn này quý như thế Vợ của anh sẽ không nỡ để anh rửa đâu Bài học Quan điểm của khách hàng rất khó thay đổi Quan trọng là cần biết tận dụng thời cơ để thay đổi tâm lý khách hàng 3. Người bán sữa bò rong Có một vị khách đi mua sữa bò vào một sáng cuối tuần Khi đang đi thì gặp người gánh hàng rong đang bán sữa bò ở ven đường Anh tiến đến và hỏi giá Người bán hàng rong trả lời Một chai 3 đồng, ba chai 10 đồng Anh không nói gì liền lấy trong túi ra 3 đồng để mua một chai Rồi mua thành 3 lần Mua xong anh ta rất đắc ý cười lớn nói với người bán hàng rong Ông có thấy không? Tôi chỉ trả 9 đồng đã mua được 3 chai sữa. Người bán hàng rong không nói gì, chỉ mỉm cười và thầm nghĩ. Hay thật, từ khi áp dụng phương pháp tính giá này, chỉ một thoáng mình đã bán được 3 chai sữa Bài học Muốn bán được nhiều hàng cần nắm gió tâm lý khách hàng Từ đó sáng tạo ra phương thức bán hàng độc đáo 4. Kinh doanh giày Nhiều năm trước, hai nhân viên kinh doanh được một nhà sản xuất giày ở Anh gửi tới châu Phi để tìm hiểu tiềm năng thị trường và báo cáo lại Người thứ nhất cho biết Thị trường không có tiềm năng không ai mang giày cả Người thứ hai cho biết Thị trường có tiềm năng to lớn không ai mang giày cả Bài học Trong mỗi tình huống đều đi kèm cả thuận lợi và khó khăn Người kinh doanh giỏi là người nhìn thấy thuận lợi trong khó khăn và biết cách tận dụng nó\"\n\n* Nội dung mẫu 4:\n\"Tại sao người càng thành đạt càng thích vay mượn người khác. Hãy học cách dùng đòn bầy để nâng được cả thế giới. Có một người đàn ông nghèo, ngày không ăn đủ ba bữa, quần áo chỉ mặc đi mặc lại duy nhất một bộ. Anh ta thường ngầm lên nhìn trời và than cho số phận đau khổ của mình. Hàng ngày anh ta làm việc cực nhọc cũng chẳng đủ sống. Có một lần, ông thương tâm mà kêu khóc Hỏi ông trời có công bằng hay không Tại sao có người giàu sang sung sướng như vậy Còn người nghèo chúng tôi mỗi ngày đều chịu khổ chịu mẹ Thượng đế vừa cười vừa hỏi ông này Theo ông như thế nào thì sẽ thấy ta công bằng Người đàn ông nghèo đắt Con muốn một người giàu có trở nên nghèo giống con Có cuộc sống như con Nếu như người giàu ấy có thể phú quý trở lại Thì con sẽ không oán thán gì nữa Thượng đế gật đầu nói được. Thế rồi Thượng Đế cho một người giàu sang biến thành một người bần hàn giống như người đàn ông kia. Thượng Đế còn cho mỗi người một ngôi nhà và một quả núi. Mỗi ngày họ đều đào than lộ thiên ở trên núi đem xuống núi bán, lấy tiền mua lương thực. Sau một tháng, than lộ thiên đều đã bị họ đào hết. Người giàu và người nghèo cũng bắt đầu đào núi để lấy than. Người nghèo vốn thường quen với cuộc sống khổ cực Việc đào than đối với anh ta chẳng có khó nhọc gì Rất nhanh anh ta đã tích được đủ một xe than trở xuống núi bán lấy tiền Và dùng toàn bộ số tiền để mua đồ ăn ngon mang về cho mẹ già, con thơ ở nhà Người giàu vốn chưa bao giờ làm việc nặng nhọc Đào một lúc lại nghỉ một hồi Mồ hôi đầm đìa khắp thân mà vẫn chưa đào được là bao Tới chập tối anh ta mới chất được đủ một xe than để mang xuống núi Bán được tiền rồi Anh ta chỉ mua vài khế màn hậu Còn số tiền dự anh ta cất để dành Ngày thứ hai, người nghèo đã dậy từ sớm để đi đảo than, còn người giàu lại đi xuống núi, quê hai người nghèo khác. Hai người này chẳng nói chẳng rằng đã bắt tay vào đảo than. Trông tướng tá thì khỏe mạnh và to cao hơn người nghèo kia rất nhiều. Người giàu đứng một bên chỉ đạo, chẳng mấy chốc, Họ đã đào được vài xe than đầy Người giàu mang xe than xuống núi bán Được bao nhiêu lại lấy tiền đó thuê thêm lao động Sau một ngày đó Người giàu trả tiền cho công nhân của mình xong Còn để ra được một khoản tiền gấp mấy lần người nghèo kia Một tháng lại qua rất mau Người nghèo chỉ đào được một góc nhỏ mỏ than ở trên núi Mỗi ngày tiền kiếm được anh ta đều mua đồ ăn ngon cho mình và gia đình, cũng chẳng để lại được là bao. Còn người giàu vốn từ đầu đã thuê được cả một ngóm người, đào hết cả than trên núi, kiếm được không ít tiền. Anh ta dùng số tiền này đầu tư buôn đi bán lại, rất nhanh đã trở thành phú ông. Kết quả chẳng cần nói cũng có thể đoán ra, người nghèo thì chẳng dám oán trách ông trời nữa. Thành công không phải là ở việc bạn có thể làm bao nhiêu việc, mà là bạn có thể mượn bao nhiêu người làm việc cho mình. Học cách đi mượn là dùng nền tảng vốn có của bạn, mượn thêm công sức của người khác, mượn khả năng của người khác, mượn sức lực của cả một hệ thống. Do đó, bạn phải tìm thấy điểm trọng tâm của đòn bẩy để nâng được cả thế giới\"\n\n**Quan trọng**: Bắt buộc phải viết nội dung theo văn phong, cách trình bày và ngôn ngữ giống hệt như các nội dung mẫu ở trên. Nhớ là phải thêm đầy đủ các dấu chấm than, hỏi chấm, hai chấm, chấm phẩy (!,?,:,;) nhé\n\nVí dụ thay vì viết: \"khi xe đang chạy chú tài xế bỗng nói dạo này kiểm tra gắt gao lắm nếu có bị công an hỏi cô cứ nói mình là bạn bè nhé cho qua chuyện.\"\n=> Hãy sửa thành như sau:\n\n\"khi xe đang chạy, chú tài xế bỗng nói: Dạo này kiểm tra gắt gao lắm, nếu có bị công an hỏi cô cứ nói mình là bạn bè nhé cho qua chuyện.\"\n\n**Yêu cầu bắt buộc**:\n- Text ouput must be a maximum of 3000 characters long and minimum of 2500 characters long. This is a mandatory requirement.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -2336,
+        -432
+      ],
+      "id": "9fb2f278-4f4d-4d4c-94a2-9f6683f3d648",
+      "name": "Write Script"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Viết lại bản transcript dưới đây thành văn bản hoàn chỉnh thuần text. Viết y hệt nội dung gốc, chỉ bỏ các phần thừa của json. Yêu cầu viết thành 1 đoạn duy nhất không xuống dòng, không markdown\n\nTranscript: {{ $json.transcript.map(item => item.text).join(' ') }}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -3008,
+        -416
+      ],
+      "id": "13fd94eb-60e2-41dd-89f8-ba1f4bd60241",
+      "name": "\bClean Transcript YT"
+    },
+    {
+      "parameters": {
+        "url": "https://transcriptapi.com/api/v2/youtube/transcript",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "video_url",
+              "value": "={{ $json.chatInput }}"
+            },
+            {
+              "name": "type",
+              "value": "video"
+            },
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk_yUXyzg-O_aX7GfMyJhWslmciys9EhxrgS_AWiNYWH3I"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5"
+            },
+            {
+              "name": "Referer",
+              "value": "https://youtubetotranscript.com/"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3232,
+        -416
+      ],
+      "id": "666e7154-796f-4bf7-b05e-13b0eda0d9a3",
+      "name": "Youtube Transcript1",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -3024,
+        -160
+      ],
+      "id": "704bdecf-62a8-4f1d-bd09-7b07e82be644",
+      "name": "Google Gemini Chat Model6",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "acnApVW2WJpkZTnc",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2032,
+        -208
+      ],
+      "id": "5ed038de-e1e9-4787-a401-9e41d96b8fc4",
+      "name": "Google Gemini Chat Model7",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "acnApVW2WJpkZTnc",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fb2f3bcd-a525-4e7d-80e0-a169a32fd829",
+              "name": "transcript",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2640,
+        -416
+      ],
+      "id": "fde39836-0b51-4f32-8964-d27b0886c024",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        -208
+      ],
+      "id": "7630a1b3-683d-4078-853f-2128cd460fe6",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "acnApVW2WJpkZTnc",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.generated_image[0].image_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2128,
+        112
+      ],
+      "id": "d0ca7bc0-31d0-4b36-8a58-8c9677781363",
+      "name": "Download"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.scenes",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1648,
+        -432
+      ],
+      "id": "47c3c2f0-caa7-4b1f-8adb-138ca6a4d67a",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1424,
+        -432
+      ],
+      "id": "bb5290ed-6036-4fab-a827-6ed29d548c28",
+      "name": "Loop Over Items1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3b54be1d-b507-42b6-ac1d-93702af7a829",
+              "name": "character_name",
+              "value": "={{ $json['output.scenes'].character_name }}",
+              "type": "string"
+            },
+            {
+              "id": "52ff826b-9e52-4542-9419-9eefdfcf72ff",
+              "name": "veo3_prompt",
+              "value": "={{ $json['output.scenes'].veo3_prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "dcb448be-ec91-434d-8b2b-b2988058b450",
+              "name": "image_prompt",
+              "value": "={{ $json['output.scenes'].image_prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "30314636-c728-480d-97e2-9055e3d1f9d3",
+              "name": "scene_number",
+              "value": "={{ $json['output.scenes'].scene_number }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1088,
+        -416
+      ],
+      "id": "e81f13a0-bd01-4d71-b9d9-2b71bf703008",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v2/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 9ed26669739e4bd6a76f10ac3df7f007822c2672f253dd00fd699499f5f00facd6296f209c6a7d665001431d63525d8d"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    \"template_id\": \"713ecaed-45fa-478c-818d-2a2d7b2a04c8\",\n    \"modifications\": {\n      ...($json.modifications || $('Format Video Modifications').item.json.modifications || {})\n    }\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -976,
+        -144
+      ],
+      "id": "e92d5b83-ea98-41e1-a236-83778d6ba430",
+      "name": "Render",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://cvgrlrolpxysctayljwy.supabase.co/storage/v1/object/honda/videos/scene-{{ $('Edit Fields4').item.json.scene_number }}-{{ Date.now() }}.mp4",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2Z3Jscm9scHh5c2N0YXlsand5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE4NTE3OCwiZXhwIjoyMDkyNzYxMTc4fQ.rp7uYmXfZtcE0DkwcJ_ZbHqLm9YQASbSueFsKh6AS9Y\",\n  \"Content-Type\": \"{{ $binary.data.mimeType }}\"\n}\n",
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1440,
+        -176
+      ],
+      "id": "8a5674bc-643a-48ff-b904-48728d5bede4",
+      "name": "Upload Video"
+    },
+    {
+      "parameters": {
+        "amount": 100
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -784,
+        -144
+      ],
+      "id": "f87123e9-2ceb-40e8-9823-92310fc71c2e",
+      "name": "Wait4",
+      "webhookId": "c99eeb9a-d78a-462a-9665-92fe24bac6a0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9b356193-7101-4123-8429-25004c43ee58",
+              "name": "uuid",
+              "value": "={{ $json.uuid }}",
+              "type": "string"
+            },
+            {
+              "id": "b21eeac5-eaf8-4e00-a50a-cc9550dd6e5c",
+              "name": "prompt",
+              "value": "={{ $json.input_text || $json.prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "5033c4bc-a08c-48be-9a27-867f7b79b167",
+              "name": "type",
+              "value": "={{ $json.type }}",
+              "type": "string"
+            },
+            {
+              "id": "7a7a7afc-8074-4b4f-970a-18e5b9dab4e0",
+              "name": "scene_number",
+              "value": "={{ $('Edit Fields2').item.json.scene_number }}",
+              "type": "string"
+            },
+            {
+              "id": "b0bc527a-9545-4565-a595-16006c39b0f5",
+              "name": "image_prompt",
+              "value": "={{ $('Edit Fields2').item.json.image_prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "01901f02-ccf6-47e3-a916-d61c8a421c55",
+              "name": "veo3_prompt",
+              "value": "={{ $('Edit Fields2').item.json.veo3_prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "99252698-a087-4b47-850f-7d266e78099a",
+              "name": "character_name",
+              "value": "={{ $('Edit Fields2').item.json.character_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3264,
+        128
+      ],
+      "id": "af4d0a57-8e4e-4ea0-9754-a683ae7b06a4",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const SUPABASE_URL = 'https://cvgrlrolpxysctayljwy.supabase.co';\nconst BUCKET = 'honda';\n\nconst modifications = {};\nlet index = 1;\n\nfor (const item of items) {\n  let key =\n    item.json.Key ||\n    item.json.key ||\n    item.json.path ||\n    item.json.fullPath ||\n    item.json.full_path;\n\n  if (!key) continue;\n\n  // Nếu Supabase trả về \"honda/videos/scene-1.mp4\"\n  // thì bỏ phần \"honda/\" để tránh bị lặp bucket\n  if (key.startsWith(`${BUCKET}/`)) {\n    key = key.replace(`${BUCKET}/`, '');\n  }\n\n  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${key}`;\n\n  modifications[`Video-${index}.source`] = publicUrl;\n  index++;\n}\n\nreturn [\n  {\n    json: {\n      modifications\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1216,
+        -144
+      ],
+      "id": "2afd5761-51c5-480e-a219-c33eff5f6cfe",
+      "name": "Format Video Modifications"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -800,
+        -672
+      ],
+      "id": "080696f0-c850-46d3-a3ff-623fef110589",
+      "name": "Download Video1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -496,
+        -512
+      ],
+      "id": "9e7908a6-fdd5-47cf-84ac-b5d2b0831e24",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Authorization\": \"Bearer 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\",\n  \"Content-Type\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Từ nội dung bên dưới, hãy viết một dòng mô tả tóm tắt về chủ đề nội dung để làm caption đăng lên các nền tảng mạng xã hội. Lưu ý tiêu đề không được vượt quá 100 ký tự và không được chứa ký tự dấu 2 chấm (:)\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($('Write Script').item.json.output) }}\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -800,
+        -416
+      ],
+      "id": "3621622d-137c-4b17-b6c7-18da1e636989",
+      "name": "Viết \b\bCaption",
+      "alwaysOutputData": false,
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('hook').item.json.text }}",
+        "regionCode": "VN",
+        "categoryId": "24",
+        "options": {
+          "defaultLanguage": "vi",
+          "description": "={{ $('viết content').item.json.text }}",
+          "license": "youtube",
+          "notifySubscribers": true,
+          "privacyStatus": "public",
+          "recordingDate": "={{ $('check stautus').item.json.updated_at }}",
+          "tags": "=sửa xe máy honda\nsửa xe honda\nsửa chữa xe máy\nbảo dưỡng xe máy\nbảo dưỡng xe máy định kỳ\nphun xăng fi\nphun xăng điện tử\nđiện xe máy\nhọc điện xe máy\nlọc gió\nlọc gió wave alpha\nvệ sinh lọc gió\nthay bugi wave alpha\nắc quy xe máy\nvệ sinh cọc bình ắc quy\nbình ắc quy sạc không vào\ndầu nhớt honda chính hãng\nmá phanh xe máy\nthay má phanh trước\nmá phanh sh mòn kêu\nlốp xe\ncòi xe máy\nphụ tùng xe máy honda chính hãng\nphụ tùng honda sh\nwave alpha\nwinner\nsh\n"
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -864
+      ],
+      "id": "f44b41b1-6171-4b39-8a35-6c7220ab3708",
+      "name": "Upload a video",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "wHHsQ49yXrbQhrsR",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "postSettings": {
+          "text": "",
+          "visibilityType": 0,
+          "allowComment": 1,
+          "scheduleTime": 0
+        },
+        "coverInputType": "binary"
+      },
+      "type": "n8n-nodes-social-tiktok.tikTokUpload",
+      "typeVersion": 1,
+      "position": [
+        336,
+        -672
+      ],
+      "id": "2170ca56-89bc-4703-8d9f-cebd270f72b9",
+      "name": "TikTok hệ thống head MH",
+      "credentials": {
+        "tiktokApi": {
+          "id": "xl7dGJfPcOwspBbU",
+          "name": "TikTok hệ thống head MH"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "postSettings": {
+          "text": "",
+          "visibilityType": 0,
+          "allowComment": 1,
+          "scheduleTime": 0
+        },
+        "coverInputType": "binary"
+      },
+      "type": "n8n-nodes-social-tiktok.tikTokUpload",
+      "typeVersion": 1,
+      "position": [
+        336,
+        -480
+      ],
+      "id": "4f19a02f-918c-4a28-8b9f-d25d6f139eaa",
+      "name": "TIKTOK head minhhien",
+      "credentials": {
+        "tiktokApi": {
+          "id": "a4y4BI0SxRShnlDY",
+          "name": "TikTok honda MH"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph-video.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "me",
+        "edge": "videos",
+        "sendBinaryData": true,
+        "binaryPropertyName": "data",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "description",
+                "value": "={{ $('viết content').item.json.text }}"
+              },
+              {
+                "name": "title"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        112,
+        256
+      ],
+      "id": "9027443d-ebc1-426d-a699-ac92f9750981",
+      "name": "Facebook minhhien",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "dm218UdLadYl9Lo7",
+          "name": "trung nguyen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph-video.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "me",
+        "edge": "videos",
+        "sendBinaryData": true,
+        "binaryPropertyName": "data",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "description",
+                "value": "={{ $('viết content').item.json.text }}"
+              },
+              {
+                "name": "title"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        112,
+        0
+      ],
+      "id": "1abfc4bb-eadf-4f92-a812-a7bc689fc307",
+      "name": "Facebook Phượng",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "dm218UdLadYl9Lo7",
+          "name": "trung nguyen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph-video.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "me",
+        "edge": "videos",
+        "sendBinaryData": true,
+        "binaryPropertyName": "data",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "description",
+                "value": "={{ $('viết content').item.json.text }}"
+              },
+              {
+                "name": "title"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        112,
+        -160
+      ],
+      "id": "77f926e3-3ab0-4995-908b-af577b1a316c",
+      "name": "Facebook Ha",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "dm218UdLadYl9Lo7",
+          "name": "trung nguyen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph-video.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "me",
+        "edge": "videos",
+        "sendBinaryData": true,
+        "binaryPropertyName": "data",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "description",
+                "value": "={{ $('viết content').item.json.text }}"
+              },
+              {
+                "name": "title",
+                "value": "={{ $('hook').item.json.text }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        112,
+        -304
+      ],
+      "id": "d0171460-5634-48ef-81b9-6e7b1e55b6db",
+      "name": "Facebook Trường",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "dm218UdLadYl9Lo7",
+          "name": "trung nguyen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph-video.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "me",
+        "edge": "videos",
+        "sendBinaryData": true,
+        "binaryPropertyName": "data",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "description",
+                "value": "={{ $('viết content').item.json.text }}"
+              },
+              {
+                "name": "title"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        112,
+        416
+      ],
+      "id": "6fee1c5e-4840-455e-b8db-791309c580c3",
+      "name": "Facebook Nghĩa",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "iGPJxpDmPPtUG9vg",
+          "name": "Facebook Nghĩa"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph-video.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "me",
+        "edge": "videos",
+        "sendBinaryData": true,
+        "binaryPropertyName": "data",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "description",
+                "value": "={{ $('viết content').item.json.text }}"
+              },
+              {
+                "name": "title"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        112,
+        144
+      ],
+      "id": "36ecd0ab-6ede-472d-a38b-d77e3ba4cc9a",
+      "name": "Facebook Thương",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "dm218UdLadYl9Lo7",
+          "name": "trung nguyen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2f6c6321-b90a-4f7f-b02f-2cc01ff20bc0",
+              "name": "chatInput",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2688,
+        -704
+      ],
+      "id": "c1a3e3eb-8a83-4221-a58f-d5a505a2aa78",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.geminigen.ai/uapi/v1/generate_image",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "=Tạo thumbnail TikTok dọc 9:16 cho HEAD Honda Minh Hiên, chủ đề bán xe máy Honda mới. Toàn bộ chữ trên ảnh phải là 100% tiếng Việt, đúng chính tả, không có từ tiếng Anh, bắt buộc ghi đúng tên Minh Hiên, không được sai thành Minh Hiền.\n\nTiêu đề chính lớn nhất:\n\"{{ $json.text }}\"\n\nPhong cách digital commercial 3D hiện đại, thumbnail bán hàng hút click, không phải poster infographic. 1 xe máy Honda mới là trung tâm lớn nhất, đúng dáng xe thật, đẹp, sạch, sang, không méo, không lẫn ô tô. Có 1 nhân vật người Việt trẻ trung, thân thiện, cầm chìa khóa hoặc đứng tư vấn cạnh xe. Nền sáng, sạch, tương phản mạnh, ánh sáng đẹp, cảm giác xe mới chính hãng.\n\nChỉ thêm 3 đến 4 lợi ích ngắn, chữ to, dễ đọc trên điện thoại, hoàn toàn bằng tiếng Việt, không lặp ý, ví dụ: xe mới về, giá tốt hôm nay, trả góp dễ dàng, quà tặng hấp dẫn, tiết kiệm nhiên liệu, cốp rộng tiện lợi, thiết kế đẹp, công nghệ tiện ích. Nếu có cốp thì phải là cốp xe máy, không dùng hình cốp ô tô.\n\nChân trang:\nHEAD Honda Minh Hiên\nTổng đài: 02436857674\nHotline: 0942226807\n\nBắt buộc: không watermark, không tiếng Anh, không sai chính tả, không phụ tùng, không sửa chữa, không garage, chỉ tập trung bán xe máy Honda mới, chữ phải to rõ sắc nét, tổng thể phải khiến người xem muốn bấm xem ngay."
+            },
+            {
+              "name": "model",
+              "value": "nano-banana-pro"
+            },
+            {
+              "name": "aspect_ratio",
+              "value": "9:16"
+            },
+            {
+              "name": "output_format",
+              "value": "jpeg"
+            },
+            {
+              "name": "resolution",
+              "value": "1K"
+            },
+            {
+              "name": "style",
+              "value": "Photorealistic"
+            },
+            {
+              "name": "file_urls",
+              "value": "https://cvgrlrolpxysctayljwy.supabase.co/storage/v1/object/public/honda/Gemini_Generated_Image_i01uhmi01uhmi01u.png"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2448,
+        -704
+      ],
+      "id": "d7760d64-273d-48d5-bac1-f8e796495dec",
+      "name": "tạo ảnh1",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XpB6RbASdNlfyTfL",
+          "name": "Vebee"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -2240,
+        -704
+      ],
+      "id": "fa3a2e7f-fa12-446b-92f8-2282c3d13883",
+      "name": "Wait2",
+      "webhookId": "8bde8c23-305e-4f64-88d8-dbdfb27e8f1e"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.geminigen.ai/uapi/v1/history/{{ $('tạo ảnh1').item.json.uuid }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2032,
+        -704
+      ],
+      "id": "e696285e-4415-429c-a4e6-35688ac4ff6b",
+      "name": "check stautus1",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XpB6RbASdNlfyTfL",
+          "name": "Vebee"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "74ed8f14-c0fa-4084-b7cb-75fcfd8a2502"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "đang tạo ảnh"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "abd6a859-a8bb-4d1c-8994-d0a2d3a2e3d6",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": " thành công"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "37da1e3c-352a-4364-8657-36bb0ea13b2f",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": 3,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "thất bại"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1488,
+        -736
+      ],
+      "id": "ae127c61-a17a-40c7-9b59-d13b5138e006",
+      "name": "Switch2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "04cddf72-aa28-4545-a613-c7322ff69c4d",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1760,
+        -704
+      ],
+      "id": "f8002a74-28d4-4f92-ad9f-75f71f6bd9b6",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.generated_image[0].image_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "cover"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1152,
+        -720
+      ],
+      "id": "fee947c0-8c94-4b72-8cbb-4766f9d85504",
+      "name": "Download1"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.creatomate.com/v1/renders/' + ($json.id || $json[0]?.id) }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Authorization\": \"Bearer 9ed26669739e4bd6a76f10ac3df7f007822c2672f253dd00fd699499f5f00facd6296f209c6a7d665001431d63525d8d\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -560,
+        -144
+      ],
+      "id": "ccc5d89a-3df6-415a-b84d-4a2e85a6ca87",
+      "name": "Get Render Status"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "{{ $json.status }}",
+                    "rightValue": "planned|waiting|transcribing|rendering",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    },
+                    "id": "af10f5ef-5b31-4e12-ade6-9c33407854b8"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Processing"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8cba62bf-21e2-48ab-94c3-df8508a5df45",
+                    "leftValue": "{{ $json.status }}",
+                    "rightValue": "succeeded",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Done"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2cc89df0-b1ce-4281-bca9-35fba4c2ba82",
+                    "leftValue": "{{ $json.status }}",
+                    "rightValue": "failed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Failed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -352,
+        -160
+      ],
+      "id": "2f540f93-bed6-4f7e-b028-4a53611fb2ca",
+      "name": "Switch Render"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Get status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get status": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "download",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create video": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "check stautus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check stautus": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "check stautus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tạo ảnh": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "tạo ảnh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Youtube Transcript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Script": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\bClean Transcript YT": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Youtube Transcript1": {
+      "main": [
+        [
+          {
+            "node": "\bClean Transcript YT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model6": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "\bClean Transcript YT",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model7": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Write Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Script",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Viết \b\bCaption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "download": {
+      "main": [
+        [
+          {
+            "node": "Upload Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download": {
+      "main": [
+        [
+          {
+            "node": "Create video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Format Video Modifications",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "tạo ảnh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Video": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Video Modifications": {
+      "main": [
+        [
+          {
+            "node": "Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Video1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Upload a video",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TikTok hệ thống head MH",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TIKTOK head minhhien",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Trường",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Ha",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Phượng",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Thương",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook minhhien",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Nghĩa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Viết \b\bCaption": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Get Render Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "tạo ảnh1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tạo ảnh1": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "check stautus1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check stautus1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Switch2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "check stautus1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Get Render Status": {
+      "main": [
+        [
+          {
+            "node": "Switch Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Render": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download Video1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "e58e50e9-8b41-436c-b61f-8e49ec9b35f6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "df75f6d19da9532b87ea5a84541b4ccc1d0dd5baf896242962b0dfcbc492bcf4"
+  },
+  "id": "sutRSl7TWkMtSiHr95ceB",
+  "tags": []
+}
